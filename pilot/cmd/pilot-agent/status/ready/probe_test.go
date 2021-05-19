@@ -15,11 +15,11 @@
 package ready
 
 import (
+	"context"
 	"net"
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"go.uber.org/atomic"
 
 	"istio.io/istio/pilot/cmd/pilot-agent/status/testserver"
 )
@@ -48,8 +48,9 @@ func TestEnvoyDraining(t *testing.T) {
 
 	server := testserver.CreateAndStartServer(liveServerStats)
 	defer server.Close()
-	probe := Probe{AdminPort: uint16(server.Listener.Addr().(*net.TCPAddr).Port)}
-	probe.proxyTerminating = atomic.NewBool(true)
+	ctx, cancel := context.WithCancel(context.Background())
+	probe := Probe{AdminPort: uint16(server.Listener.Addr().(*net.TCPAddr).Port), Context: ctx}
+	cancel()
 
 	err := probe.isEnvoyReady()
 
